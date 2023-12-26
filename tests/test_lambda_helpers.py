@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 import boto3
@@ -12,15 +13,35 @@ class Test(TestCase):
         lambda_client = boto3.client("lambda")
 
         lambda_manager = LambdaManage(lambda_client, mock_resource)
-        role = lambda_manager.get_iam_role('some_role_name')
+        lambda_manager.get_iam_role('some_role_name')
         
         mock_resource.Role.assert_called_with('some_role_name')
         mock_resource.Role().load.assert_called()
 
-    def test_create_iam_role(self):
+    @patch("boto3.resource")
+    def test_create_iam_role(self, mock_resource):
         role_name = "test_iam_role_cg"
 
+        lambda_role_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "lambda.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+
+        policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        json_dumped_lambda_role_policy = json.dumps(lambda_role_policy)
+
         lambda_client = boto3.client("lambda")
-        iam_resource = boto3.resource("iam")
-        lambda_manager = LambdaManage(lambda_client, iam_resource)
+        lambda_manager = LambdaManage(lambda_client, mock_resource)
+        lambda_manager.get_iam_role= MagicMock()
+        lambda_manager.get_iam_role.return_value = None
         lambda_manager.create_iam_role(role_name)
+        mock_resource.create_role.assert_called_with(RoleName=role_name, 
+                                                AssumeRolePolicyDocument=json_dumped_lambda_role_policy)
+        mock_resource.create_role().attach_policy.assert_called_with(PolicyArn=policy_arn)
+

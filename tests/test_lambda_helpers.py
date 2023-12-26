@@ -11,9 +11,16 @@ class Test(TestCase):
 
         lambda_client = boto3.client("lambda")
 
-    
         lambda_manager = LambdaManage(lambda_client, mock_resource)
-        lambda_manager.get_iam_role('some_role_name')
+        role = lambda_manager.get_iam_role('some_role_name')
         
         mock_resource.Role.assert_called_with('some_role_name')
         mock_resource.Role().load.assert_called()
+
+    def test_create_iam_role(self):
+        role_name = "test_iam_role_cg"
+
+        lambda_client = boto3.client("lambda")
+        iam_resource = boto3.resource("iam")
+        lambda_manager = LambdaManage(lambda_client, iam_resource)
+        lambda_manager.create_iam_role(role_name)

@@ -1,4 +1,5 @@
 
+import json
 import logging
 import pytest
 from botocore.exceptions import ClientError
@@ -32,3 +33,48 @@ class LambdaManage:
                     err.response["Error"]["Message"],
                 )
                 raise
+        return role
+    
+    def create_iam_role(self, iam_role_name):
+        role = self.get_iam_role(iam_role_name)
+
+        if role is not None:
+            return role, False
+        
+        lambda_role_policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "lambda.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+        try:
+            role = self.iam_resource.create_role(
+                RoleName= iam_role_name,
+                AssumeRolePolicyDocument=json.dumps(lambda_role_policy
+                                                    )
+            )
+            logger.info(f'Created role : {role.name}')
+
+            # Attaching policy
+            role.attach_policy(PolicyArn=policy_arn)
+            logger.info(f'Attached execution policy to role: {role.name}')
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "EntityAlredyExists":
+                role = self.iam_resource.Role(iam_role_name)
+                logger.warning(f'The Role {role.name}')
+            else:
+                logger.exception(
+                    f"Issue Creating role {iam_role_name} or attach policy {policy_arn}"
+                )
+            raise
+
+        return role, True
+
+
+

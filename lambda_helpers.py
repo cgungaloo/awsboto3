@@ -1,6 +1,9 @@
 
+import io
 import json
 import logging
+from time import sleep
+import zipfile
 import pytest
 from botocore.exceptions import ClientError
 
@@ -47,7 +50,7 @@ class LambdaManage:
                 {
                     "Effect": "Allow",
                     "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Action": "sts:AssumeRole",
+                    "Action": "sts:AssumeRole"
                 }
             ],
         }
@@ -76,5 +79,37 @@ class LambdaManage:
 
         return role, True
 
+    def create_deployment_package(self,filename, destination_file):
+        
+        with zipfile.ZipFile(destination_file, 'w') as zip_object:
+            zip_object.write(filename)
+
+        with open(destination_file,'rb') as file_data:
+            bytes_content = file_data.read()
+        return bytes_content
+
+    def deploy_lambda_function(self, function_name,
+                               iam_role, handler_name,
+                               deployment_package):
+        
+        response = self.lambda_client.create_function(
+            FunctionName=function_name,
+            Description="GL AWS Lambda doc example",
+            Runtime="python3.12",
+            Role=iam_role.arn,
+            Handler=handler_name,
+            Code={"ZipFile": deployment_package},
+            Publish=True,
+        )
+        sleep(5)
+        functions = self.lambda_client.list_functions()
+        
+        functionfound = ''
+        for function in functions['Functions']:
+            if function['FunctionName'] == function_name:
+                functionfound = function
+                break
+
+        logger.info(f'Created Function {functionfound['FunctionName']}!!!!')
 
 

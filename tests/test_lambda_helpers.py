@@ -7,6 +7,15 @@ from awsboto3.lambda_helpers import LambdaManage
 
 class Test(TestCase):
 
+    def test_create_deployment_package(self):
+        test_filename = 'awsboto3/lambdas/lambda_function.py'
+        destination_file = 'awsboto3/lambdas/lambdafunction-gl.zip'
+        lambda_client = boto3.client("lambda")
+        lambda_resource = boto3.resource("iam")
+
+        lambda_manager = LambdaManage(lambda_client, lambda_resource)
+        lambda_manager.create_deployment_package(test_filename, destination_file)
+
     @patch("boto3.resource")
     def test_iam_role(self, mock_resource):
 

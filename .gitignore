@@ -1,3 +1,5 @@
 __init__.cpython*
 lambda_helpers.cpython*
 test_lambda_helpers.cpython*
+test_infrarun.cpython*
+lambdafunction-gl.zip

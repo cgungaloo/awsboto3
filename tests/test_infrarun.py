@@ -86,7 +86,12 @@ class Test(TestCase):
 
         api_wrapper = APIGatewayManage()
 
-        api_wrapper.create_api(account_id, api_base_path,
+        api_id = api_wrapper.create_api(account_id, api_base_path,
                         api_stage, apig_client,api_name)
+        
+        root_id = api_wrapper.get_root_id(apig_client, api_id)
+        
+        # create basepath
+        api_wrapper.create_basepath(apig_client,api_id,root_id,api_base_path)
 
 

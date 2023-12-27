@@ -12,3 +12,21 @@ class APIGatewayManage:
         response = apig_client.create_rest_api(name=api_name)
         api_id = response['id']
         logger.info("Create REST API %s with ID %s.", api_name, api_id)
+        return api_id
+
+    def get_root_id(self,api_client,api_id):
+
+        response = api_client.get_resources(restApiId=api_id)
+        root_id = next(item["id"] for item in response["items"] if item["path"] == "/")
+        logger.info("Found root resource of the REST API with ID %s.", root_id)
+        return root_id
+    
+    def create_basepath(self, api_client,api_id,root_id, api_base_path):
+        response = api_client.create_resource(
+            restApiId=api_id, parentId=root_id, pathPart=api_base_path
+        )
+
+        base_id = response["id"]
+        logger.info("Created base path %s with ID %s.", api_base_path, base_id)
+
+        return base_id

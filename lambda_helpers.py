@@ -92,24 +92,32 @@ class LambdaManage:
                                iam_role, handler_name,
                                deployment_package):
         
-        response = self.lambda_client.create_function(
-            FunctionName=function_name,
-            Description="GL AWS Lambda doc example",
-            Runtime="python3.12",
-            Role=iam_role.arn,
-            Handler=handler_name,
-            Code={"ZipFile": deployment_package},
-            Publish=True,
-        )
-        sleep(5)
         functions = self.lambda_client.list_functions()
-        
         functionfound = ''
         for function in functions['Functions']:
             if function['FunctionName'] == function_name:
                 functionfound = function
                 break
 
-        logger.info(f'Created Function {functionfound['FunctionName']}!!!!')
+        if functionfound['FunctionName'] != function_name:
+            response = self.lambda_client.create_function(
+                FunctionName=function_name,
+                Description="GL AWS Lambda doc example",
+                Runtime="python3.12",
+                Role=iam_role.arn,
+                Handler=handler_name,
+                Code={"ZipFile": deployment_package},
+                Publish=True,
+            )
+            sleep(5)
+            functions = self.lambda_client.list_functions()
+            
+            functionfound = ''
+            for function in functions['Functions']:
+                if function['FunctionName'] == function_name:
+                    functionfound = function
+                    break
+
+            logger.info(f'Created Function {functionfound['FunctionName']}!!!!')
 
 

@@ -92,6 +92,7 @@ class Test(TestCase):
         root_id = api_wrapper.get_root_id(apig_client, api_id)
         
         # create basepath
-        api_wrapper.create_basepath(apig_client,api_id,root_id,api_base_path)
+        base_id =api_wrapper.create_basepath(apig_client,api_id,root_id,api_base_path)
+        api_wrapper.create_method(apig_client, api_id, base_id)
 
 

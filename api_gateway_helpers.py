@@ -30,3 +30,14 @@ class APIGatewayManage:
         logger.info("Created base path %s with ID %s.", api_base_path, base_id)
 
         return base_id
+    
+    def create_method(self, api_client, api_id,base_id):
+        api_client.put_method(
+            restApiId=api_id,
+            resourceId=base_id,
+            httpMethod="ANY",
+            authorizationType="NONE"
+        )
+        logger.info(
+            "Created a method that accepts all HTTP verbs for the base " "resource."
+        )

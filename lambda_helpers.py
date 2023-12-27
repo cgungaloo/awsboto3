@@ -9,7 +9,6 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-
 class LambdaManage:
     def __init__(self,lambda_client, iam_resource):
         self.lambda_client = lambda_client
@@ -66,6 +65,7 @@ class LambdaManage:
 
             # Attaching policy
             role.attach_policy(PolicyArn=policy_arn)
+            role.attach_policy(PolicyArn='arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator')
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
             if error.response["Error"]["Code"] == "EntityAlredyExists":

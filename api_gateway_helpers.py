@@ -61,7 +61,9 @@ class APIGatewayManage:
 
     def create_deployment(self,api_client,api_id,api_stage,account_id,
                           api_base_path, lambda_client, lambda_function_arn):
+        
         api_client.create_deployment(restApiId=api_id, stageName=api_stage)
+        print('####################### DEPLOYED ##################################')
         logger.info("Deployed REST API %s.", api_id)
 
         source_arn = (
@@ -82,5 +84,13 @@ class APIGatewayManage:
             lambda_function_arn,
             source_arn,
         )
+
+    def construct_api_url(self, api_id, region, api_stage, api_base_path):
+        api_url = (
+            f"https://{api_id}.execute-api.{region}.amazonaws.com/"
+            f"{api_stage}/{api_base_path}"
+        )
+        logger.info("Constructed REST API base URL: %s.", api_url)
+        return api_url
 
     

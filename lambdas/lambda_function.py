@@ -11,7 +11,10 @@ def lambda_handler(event, context):
     res_body['x'] = int(x)
     res_body['y'] = int(y)
     res_body['op'] = op
-    res_body['ans'] = multi(res_body['x'],res_body['y'])
+    if op == 'multi':
+        res_body['ans'] = multi(res_body['x'],res_body['y'])
+    else:
+        res_body['ans'] = add(res_body['x'],res_body['y'])
     print(res_body)
     
     http_res = {}
@@ -25,3 +28,6 @@ def lambda_handler(event, context):
     
 def multi(x,y):
     return x * y
+
+def add(x,y):
+    return x + y

@@ -98,13 +98,10 @@ class Test(TestCase):
 
         # x=5&y=3&op=myop
 
-        # {
-        #   "x": 5,
-        #   "y": 3
-        # }
-
         # deploy gateway
         api_wrapper.create_deployment(apig_client,api_id,api_stage, account_id, 
                                       api_base_path,lambda_client, function_arn)
-
+        
+        api_url = api_wrapper.construct_api_url(api_id, apig_client.meta.region_name, api_stage, api_base_path)
+        api_url
 

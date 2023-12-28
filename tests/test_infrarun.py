@@ -41,7 +41,7 @@ class Test(TestCase):
 
         lambda_role_name = "gl-lambda-role"
         lambda_function_name = "gl-lambda-rest"
-        lambda_handler_name = "lambda_handler_rest.lambda_handler"
+        lambda_handler_name = "awsboto3.lambdas.lambda_function.lambda_handler"
         lambda_filename = "awsboto3/lambdas/lambda_function.py"
         destination_file = 'awsboto3/lambdas/lambdafunction-gl.zip'
 
@@ -95,5 +95,16 @@ class Test(TestCase):
         base_id =api_wrapper.create_basepath(apig_client,api_id,root_id,api_base_path)
 
         api_wrapper.create_method(apig_client, api_id, base_id, function_arn)
+
+        # x=5&y=3&op=myop
+
+        # {
+        #   "x": 5,
+        #   "y": 3
+        # }
+
+        # deploy gateway
+        api_wrapper.create_deployment(apig_client,api_id,api_stage, account_id, 
+                                      api_base_path,lambda_client, function_arn)
 
 

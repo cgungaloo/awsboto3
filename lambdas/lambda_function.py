@@ -11,7 +11,7 @@ def lambda_handler(event, context):
     res_body['x'] = int(x)
     res_body['y'] = int(y)
     res_body['op'] = op
-    res_body['ans'] = multi(x,y)
+    res_body['ans'] = multi(res_body['x'],res_body['y'])
     print(res_body)
     
     http_res = {}

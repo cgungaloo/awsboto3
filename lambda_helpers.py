@@ -60,7 +60,7 @@ class LambdaManage:
                                                     )
             )
             logger.info(f'Created role : {role.name}')
-
+            role.attach_policy(PolicyArn=policy_arn)
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
             if error.response["Error"]["Code"] == "EntityAlredyExists":

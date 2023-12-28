@@ -58,4 +58,29 @@ class APIGatewayManage:
         logger.info(
             f"Set function {lambda_function_arn}"
         )
+
+    def create_deployment(self,api_client,api_id,api_stage,account_id,
+                          api_base_path, lambda_client, lambda_function_arn):
+        api_client.create_deployment(restApiId=api_id, stageName=api_stage)
+        logger.info("Deployed REST API %s.", api_id)
+
+        source_arn = (
+        f"arn:aws:execute-api:{api_client.meta.region_name}:"
+        f"{account_id}:{api_id}/*/*/{api_base_path}")
+
+        lambda_client.add_permission(
+            FunctionName=lambda_function_arn,
+            StatementId=f"demo-invoke",
+            Action="lambda:InvokeFunction",
+            Principal="apigateway.amazonaws.com",
+            SourceArn=source_arn,
+        )
+
+        logger.info(
+            "Granted permission to let Amazon API Gateway invoke function %s "
+            "from %s.",
+            lambda_function_arn,
+            source_arn,
+        )
+
     

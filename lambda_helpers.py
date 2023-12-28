@@ -13,9 +13,7 @@ class LambdaManage:
     def __init__(self,lambda_client, iam_resource):
         self.lambda_client = lambda_client
         self.iam_resource = iam_resource
-
-    # def create_iam_role(self, iam_role_name):
-        
+    
     def get_iam_role(self, iam_role_name):
         role = None
 
@@ -63,9 +61,6 @@ class LambdaManage:
             )
             logger.info(f'Created role : {role.name}')
 
-            # Attaching policy
-            role.attach_policy(PolicyArn=policy_arn)
-            role.attach_policy(PolicyArn='arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator')
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
             if error.response["Error"]["Code"] == "EntityAlredyExists":
@@ -96,10 +91,10 @@ class LambdaManage:
         functionfound = ''
         for function in functions['Functions']:
             if function['FunctionName'] == function_name:
-                functionfound = function
+                functionfound = function['FunctionName']
                 break
 
-        if functionfound['FunctionName'] != function_name:
+        if functionfound != function_name:
             response = self.lambda_client.create_function(
                 FunctionName=function_name,
                 Description="GL AWS Lambda doc example",
@@ -115,9 +110,9 @@ class LambdaManage:
             functionfound = ''
             for function in functions['Functions']:
                 if function['FunctionName'] == function_name:
-                    functionfound = function
+                    functionfound = function['FunctionName']
                     break
 
-            logger.info(f'Created Function {functionfound['FunctionName']}!!!!')
-
+            logger.info(f'Created Function {functionfound}!!!!')
+            return response['FunctionArn']
 

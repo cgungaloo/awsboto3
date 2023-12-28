@@ -31,13 +31,31 @@ class APIGatewayManage:
 
         return base_id
     
-    def create_method(self, api_client, api_id,base_id):
+    def create_method(self, api_client, api_id,base_id, lambda_function_arn):
         api_client.put_method(
             restApiId=api_id,
             resourceId=base_id,
-            httpMethod="ANY",
+            httpMethod="GET",
             authorizationType="NONE"
         )
         logger.info(
             "Created a method that accepts all HTTP verbs for the base " "resource."
         )
+
+        lambda_uri = (
+        f"arn:aws:apigateway:{api_client.meta.region_name}:"
+        f"lambda:path/2015-03-31/functions/{lambda_function_arn}/invocations"
+    )
+        # Specify 'POST' for integrationHttpMethod
+        api_client.put_integration(
+            restApiId=api_id,
+            resourceId= base_id,
+            httpMethod="GET",
+            type="AWS_PROXY",
+            integrationHttpMethod='POST',
+            uri=lambda_uri
+        )
+        logger.info(
+            f"Set function {lambda_function_arn}"
+        )
+    

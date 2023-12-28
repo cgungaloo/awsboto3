@@ -65,7 +65,7 @@ class Test(TestCase):
         lambda_pck_bytes = wrapper.create_deployment_package(lambda_filename,
                                                              destination_file)
 
-        wrapper.deploy_lambda_function(lambda_function_name,
+        function_arn = wrapper.deploy_lambda_function(lambda_function_name,
                                        iam_role,
                                        lambda_handler_name,
                                         lambda_pck_bytes)
@@ -93,6 +93,7 @@ class Test(TestCase):
         
         # create basepath
         base_id =api_wrapper.create_basepath(apig_client,api_id,root_id,api_base_path)
-        api_wrapper.create_method(apig_client, api_id, base_id)
+
+        api_wrapper.create_method(apig_client, api_id, base_id, function_arn)
 
 

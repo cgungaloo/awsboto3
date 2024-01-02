@@ -92,5 +92,19 @@ class APIGatewayManage:
         )
         logger.info("Constructed REST API base URL: %s.", api_url)
         return api_url
+    
+    def delete_api(self, api_name, api_client):
+        response = api_client.get_rest_apis()
+        response_items = response['items']
+        matches = []
+        response_items
+        for item in response_items:
+            if item['name'] == api_name:
+                matches.append(item['id'])
+
+        for id in matches:
+            api_client.delete_rest_api(restApiId=id)
+            logger.info(f'deleted api {id}')
+
 
     

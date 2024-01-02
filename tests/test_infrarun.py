@@ -82,6 +82,8 @@ class Test(TestCase):
 
         api_wrapper = APIGatewayManage()
 
+        api_wrapper.delete_api(api_name, apig_client)
+
         api_id = api_wrapper.create_api(account_id, api_base_path,
                         api_stage, apig_client,api_name)
         

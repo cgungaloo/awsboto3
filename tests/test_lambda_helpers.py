@@ -54,3 +54,27 @@ class Test(TestCase):
                                                 AssumeRolePolicyDocument=json_dumped_lambda_role_policy)
         mock_resource.create_role().attach_policy.assert_called_with(PolicyArn=policy_arn)
 
+    def test_check_function_exists(self):
+
+        lambda_client = boto3.client("lambda")
+
+        lambda_stubber = Stubber(lambda_client)
+
+        functions_response = {
+            'NextMarker':'my-marker-gl',
+            'Functions': [
+
+            ]
+        }
+        lambda_stubber.add_response('list_functions',functions_response)
+        lambda_stubber.activate()
+
+        lambda_resource = boto3.resource("iam")
+
+        lambda_manager = LambdaManage(lambda_client, lambda_resource)
+
+        exists = lambda_manager.check_if_function_exists('myfunction')
+
+        self.assertFalse(exists)
+
+

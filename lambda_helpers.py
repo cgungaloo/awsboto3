@@ -109,9 +109,7 @@ class LambdaManage:
         functions = self.lambda_client.list_functions()
         for function in functions['Functions']:
             if function['FunctionName'] == function_name:
-                # functionfound = function['FunctionName']
                 return True
-        
         return False
 
 

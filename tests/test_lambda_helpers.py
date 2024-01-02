@@ -3,7 +3,9 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 import boto3
 from botocore.stub import Stubber
+import pytest
 from awsboto3.lambda_helpers import LambdaManage
+from botocore.exceptions import ClientError
 
 class Test(TestCase):
 
@@ -26,6 +28,7 @@ class Test(TestCase):
         
         mock_resource.Role.assert_called_with('some_role_name')
         mock_resource.Role().load.assert_called()
+    
 
     @patch("boto3.resource")
     def test_create_iam_role(self, mock_resource):
@@ -53,6 +56,37 @@ class Test(TestCase):
         mock_resource.create_role.assert_called_with(RoleName=role_name, 
                                                 AssumeRolePolicyDocument=json_dumped_lambda_role_policy)
         mock_resource.create_role().attach_policy.assert_called_with(PolicyArn=policy_arn)
+
+    def test_create_role_error(self):
+        role_name = "test_iam_role_cg"
+        lambda_client = boto3.client("lambda")
+        resource_client = boto3.resource('iam')
+
+        resource_stubber = Stubber(resource_client.meta.client)
+
+        role_response = {
+            'Role':{
+                'RoleName':'gl-lambda-role-tst',
+                'Path':'mypath',
+                'Arn':'some-arn-123-321-abc-dew-how',
+                'CreateDate':'2024-01-02',
+                'RoleId':'id12345678910111213141516'
+            }
+        }
+
+        resource_stubber.add_client_error('create_role','EntityAlredyExists')
+        resource_stubber.activate()
+        lambda_manager = LambdaManage(lambda_client, resource_client)
+
+        lambda_manager.get_iam_role= MagicMock()
+        lambda_manager.get_iam_role.return_value = None
+
+        with pytest.raises(SystemError) as clientexcp:
+            lambda_manager.create_iam_role(role_name)
+        
+        assert str(clientexcp.value) == 'Entity already exists'
+        
+
 
     def test_check_function_exists_false(self):
 

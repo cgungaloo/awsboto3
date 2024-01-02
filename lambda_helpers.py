@@ -1,10 +1,8 @@
 
-import io
 import json
 import logging
 from time import sleep
 import zipfile
-import pytest
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
@@ -66,6 +64,7 @@ class LambdaManage:
             if error.response["Error"]["Code"] == "EntityAlredyExists":
                 role = self.iam_resource.Role(iam_role_name)
                 logger.warning(f'The Role {role.name}')
+                raise SystemError('Entity already exists',)
             else:
                 logger.exception(
                     f"Issue Creating role {iam_role_name} or attach policy {policy_arn}"

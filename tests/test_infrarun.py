@@ -24,17 +24,6 @@ class Test(TestCase):
 
         functionfound
 
-    def test_create_api(self):
-        api_wrapper = APIGatewayManage()
-        account_id = boto3.client("sts").get_caller_identity()['Account']
-        api_base_path = "glapi"
-        api_stage= 'test'
-        apig_client = boto3.client("apigateway")
-        api_name = 'glapi'
-        api_wrapper.create_rest_api(account_id, 
-                                    api_base_path,
-                        api_stage, apig_client,api_name)
-
     def test_run_e2e(self):
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")

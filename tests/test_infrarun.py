@@ -51,6 +51,8 @@ class Test(TestCase):
 
         api_name = "gl-demo-lambda-rest-api"
 
+        wrapper.delete_lambda(lambda_function_name)
+
         iam_role, should_wait = wrapper.create_iam_role(lambda_role_name)
 
         # Replace with proper checking
@@ -75,12 +77,6 @@ class Test(TestCase):
         account_id = boto3.client("sts").get_caller_identity()['Account']
         api_base_path = "glapi"
         api_stage= 'test'
-
-        # assumed_role_object = boto3.client("sts").assume_role(RoleArn=iam_role.arn,
-        #                                              RoleSessionName = "AssumeRolesSession1")
-        # credentials=assumed_role_object['Credentials']
-
-        # apig_client = assumed_role_object.client("apigateway")
 
         apig_client = boto3.client("apigateway")
 

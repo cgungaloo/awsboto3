@@ -86,15 +86,8 @@ class LambdaManage:
     def deploy_lambda_function(self, function_name,
                                iam_role, handler_name,
                                deployment_package):
-        
-        functions = self.lambda_client.list_functions()
-        functionfound = ''
-        for function in functions['Functions']:
-            if function['FunctionName'] == function_name:
-                functionfound = function['FunctionName']
-                break
-
-        if functionfound != function_name:
+    
+        if self.check_if_function_exists(function_name) is False:
             response = self.lambda_client.create_function(
                 FunctionName=function_name,
                 Description="GL AWS Lambda doc example",
@@ -105,14 +98,25 @@ class LambdaManage:
                 Publish=True,
             )
             sleep(5)
-            functions = self.lambda_client.list_functions()
-            
-            functionfound = ''
-            for function in functions['Functions']:
-                if function['FunctionName'] == function_name:
-                    functionfound = function['FunctionName']
-                    break
 
-            logger.info(f'Created Function {functionfound}!!!!')
-            return response['FunctionArn']
+            if self.check_if_function_exists(function_name):
+                logger.info(f'Created Function {function_name}!!!!')
+                return response['FunctionArn']
+            else:
+                raise
+        
+    def check_if_function_exists(self,function_name):
+        functions = self.lambda_client.list_functions()
+        for function in functions['Functions']:
+            if function['FunctionName'] == function_name:
+                # functionfound = function['FunctionName']
+                return True
+        
+        return False
+
+
+    def delete_lambda(self, lambda_function_name):
+        if self.check_if_function_exists(lambda_function_name):
+            self.lambda_client.delete_function(FunctionName=lambda_function_name)
+            
 

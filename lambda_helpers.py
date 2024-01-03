@@ -4,6 +4,7 @@ import logging
 from time import sleep
 import zipfile
 from botocore.exceptions import ClientError
+import boto3
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,16 @@ class LambdaManage:
         return role
     
     def create_iam_role(self, iam_role_name):
+        try:
+            iam_client = boto3.client('iam')
+            policies = iam_client.list_attached_role_policies(RoleName=iam_role_name)['AttachedPolicies']
+            for policy in policies:
+                policy_arn = iam_client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['Arn']
+                iam_client.detach_role_policy(RoleName=iam_role_name, PolicyArn =policy_arn)
+            iam_client.delete_role(RoleName=iam_role_name)
+        except Exception as e:
+            logger.info("Cant find role")
+
         role = self.get_iam_role(iam_role_name)
 
         if role is not None:
@@ -45,20 +56,24 @@ class LambdaManage:
                 {
                     "Effect": "Allow",
                     "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Action": "sts:AssumeRole"
+                    "Action": ["sts:AssumeRole"]
                 }
             ],
         }
-        policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+
+        add_permission_policy_arn = 'arn:aws:iam::443231674046:policy/gl-policies'
+
+        # policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 
         try:
             role = self.iam_resource.create_role(
                 RoleName= iam_role_name,
-                AssumeRolePolicyDocument=json.dumps(lambda_role_policy
-                                                    )
+                AssumeRolePolicyDocument=json.dumps(lambda_role_policy)
             )
             logger.info(f'Created role : {role.name}')
-            role.attach_policy(PolicyArn=policy_arn)
+            # role.attach_policy(PolicyArn=policy_arn)
+            role.attach_policy(PolicyArn=add_permission_policy_arn)
+            # role.attach_policy(PolicyArn=lambda_role_policy)
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
             if error.response["Error"]["Code"] == "EntityAlredyExists":
@@ -67,7 +82,7 @@ class LambdaManage:
                 raise SystemError('Entity already exists',)
             else:
                 logger.exception(
-                    f"Issue Creating role {iam_role_name} or attach policy {policy_arn}"
+                    f"Issue Creating role {iam_role_name} or attach policy {add_permission_policy_arn}"
                 )
             raise
 

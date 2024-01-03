@@ -61,9 +61,9 @@ class LambdaManage:
             ],
         }
 
-        add_permission_policy_arn = 'arn:aws:iam::443231674046:policy/gl-policies'
+        # add_permission_policy_arn = 'arn:aws:iam::443231674046:policy/gl-policies'
 
-        # policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 
         try:
             role = self.iam_resource.create_role(
@@ -71,9 +71,8 @@ class LambdaManage:
                 AssumeRolePolicyDocument=json.dumps(lambda_role_policy)
             )
             logger.info(f'Created role : {role.name}')
-            # role.attach_policy(PolicyArn=policy_arn)
-            role.attach_policy(PolicyArn=add_permission_policy_arn)
-            # role.attach_policy(PolicyArn=lambda_role_policy)
+            role.attach_policy(PolicyArn=policy_arn)
+            # role.attach_policy(PolicyArn=add_permission_policy_arn)
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
             if error.response["Error"]["Code"] == "EntityAlredyExists":

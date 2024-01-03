@@ -1,0 +1,137 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy Lambda'
+
+Parameters:
+  pLambdaErrorPeriod:
+    Type: Number
+    Default: 300
+  pLambdaErrorThreshold:
+    Type: Number
+    Default: 5
+  pLambdaFunctionName:
+    Type: String
+    Default: MyLambdaFunction
+  pOwnerTag:
+    Type: String
+    Default: ""
+  pRetentionInDays:
+    Type: Number
+    Default: 30
+  pS3Bucket:
+    Type: String
+    Default: 603825719481-lambda-deployment-packages
+  pS3Key:
+    Type: String
+    Default: MyS3Key
+
+
+Resources:
+  rMyLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${pLambdaFunctionName}"
+      RetentionInDays: !Ref pRetentionInDays
+      Tags:
+        - Key: Owner
+          Value: !Ref pOwnerTag
+
+  rMyIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "lambda-role-${pLambdaFunctionName}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Owner
+          Value: !Ref pOwnerTag
+
+  rMyLambdaRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: MyLambdaRolePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: "*"
+      Roles:
+        - !Ref rMyIAMRole
+
+  rMyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref pLambdaFunctionName
+      Role: !GetAtt rMyIAMRole.Arn
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.8
+      Code:
+        S3Bucket: !Ref pS3Bucket
+        S3Key: !Ref pS3Key
+      Tags:
+        - Key: Owner
+          Value: !Ref pOwnerTag
+
+  rErrorAlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "lambda-function-${pLambdaFunctionName}-errors"
+
+  rMyLambdaFunctionAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "lambda-function-${pLambdaFunctionName}-errors"
+      AlarmDescription: !Sub "lambda-function-${pLambdaFunctionName} errors exceed ${pLambdaErrorThreshold} %"
+      Metrics:
+        - Id: error_percentage
+          Label: Errors
+          Expression: (errors/invocations)*100
+        - Id: errors
+          Label: input
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref pLambdaFunctionName
+            Period: !Ref pLambdaErrorPeriod
+            Stat: Sum
+            Unit: Count
+        - Id: invocations
+          Label: input
+          ReturnData: false
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Ref pLambdaFunctionName
+            Period: !Ref pLambdaErrorPeriod
+            Stat: Sum
+            Unit: Count
+      EvaluationPeriods: 1
+      Threshold: !Ref pLambdaErrorThreshold
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref rErrorAlarmTopic
+      OKActions:
+        - !Ref rErrorAlarmTopic
+
+Outputs:
+  MyIAMRoleArn:
+    Description: The ARN of the IAM role
+    Value: !GetAtt rMyIAMRole.Arn
+
+
+

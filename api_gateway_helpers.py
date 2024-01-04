@@ -1,15 +1,21 @@
 
 import logging
+from botocore.exceptions import ClientError
+
 logger = logging.getLogger(__name__)
 
 class APIGatewayManage:
 
     def create_api(self, apig_client,api_name):
-        
-        response = apig_client.create_rest_api(name=api_name)
-        api_id = response['id']
-        logger.info("Create REST API %s with ID %s.", api_name, api_id)
-        return api_id
+        try:
+            response = apig_client.create_rest_api(name=api_name)
+            api_id = response['id']
+            logger.info("Create REST API %s with ID %s.", api_name, api_id)
+            return api_id
+    
+        except ClientError as error:
+            logger.info(f'Error {error.response["Error"]["Code"] }')
+
 
     def get_root_id(self,api_client,api_id):
 

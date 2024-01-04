@@ -105,16 +105,20 @@ class LambdaManage:
                                deployment_package):
     
         if self.check_if_function_exists(function_name) is False:
-            response = self.lambda_client.create_function(
-                FunctionName=function_name,
-                Description="GL AWS Lambda doc example",
-                Runtime="python3.12",
-                Role=iam_role.arn,
-                Handler=handler_name,
-                Code={"ZipFile": deployment_package},
-                Publish=True,
-            )
-            sleep(5)
+            try:
+                response = self.lambda_client.create_function(
+                    FunctionName=function_name,
+                    Description="GL AWS Lambda doc example",
+                    Runtime="python3.12",
+                    Role=iam_role.arn,
+                    Handler=handler_name,
+                    Code={"ZipFile": deployment_package},
+                    Publish=True,
+                )
+                sleep(5)
+            except ClientError as error:
+                logger.info(f'Error {error.response["Error"]["Code"] }')
+
 
             if self.check_if_function_exists(function_name):
                 logger.info(f'Created Function {function_name}!!!!')
@@ -123,15 +127,21 @@ class LambdaManage:
                 raise
         
     def check_if_function_exists(self,function_name):
-        functions = self.lambda_client.list_functions()
-        for function in functions['Functions']:
-            if function['FunctionName'] == function_name:
-                return True
-        return False
+        try:
+            functions = self.lambda_client.list_functions()
+            for function in functions['Functions']:
+                if function['FunctionName'] == function_name:
+                    return True
+            return False
+        except ClientError as error:
+                logger.info(f'Error {error.response["Error"]["Code"] }')
 
 
     def delete_lambda(self, lambda_function_name):
         if self.check_if_function_exists(lambda_function_name):
-            self.lambda_client.delete_function(FunctionName=lambda_function_name)
+            try:
+                self.lambda_client.delete_function(FunctionName=lambda_function_name)
+            except ClientError as error:
+                logger.info(f'Error {error.response["Error"]["Code"] }')
             
 

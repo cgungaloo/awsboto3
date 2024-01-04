@@ -14,4 +14,26 @@ Create the api gateway and connect it to the lambda function.
 # Testing
 Testing is not comprehensive but demonstrates both unit and E2E testing. It alsso uses the botocore Stubber class to emostrate postivie and negative scenarios.
 
+# Pre requisites
+I have authenticated using the AWS client installed locally with an IAM user. The User has the following inline policy.
+Named gl-inline-role (This could probably be improved to add this automatically to the role):
+
+```
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "Statement1",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:AddPermission"
+			],
+			"Resource": [
+				"*"
+			]
+		}
+	]
+}
+```
+
 

@@ -34,7 +34,7 @@ class LambdaManage:
                 raise
         return role
     
-    def create_iam_role(self, iam_role_name):
+    def delete_role(self, iam_role_name):
         try:
             iam_client = boto3.client('iam')
             policies = iam_client.list_attached_role_policies(RoleName=iam_role_name)['AttachedPolicies']
@@ -43,7 +43,10 @@ class LambdaManage:
                 iam_client.detach_role_policy(RoleName=iam_role_name, PolicyArn =policy_arn)
             iam_client.delete_role(RoleName=iam_role_name)
         except Exception as e:
-            logger.info("Cant find role")
+            logger.info(f"Cant find role {iam_role_name}")
+
+    def create_iam_role(self, iam_role_name):
+        self.delete_role(iam_role_name)
 
         role = self.get_iam_role(iam_role_name)
 
@@ -56,7 +59,7 @@ class LambdaManage:
                 {
                     "Effect": "Allow",
                     "Principal": {"Service": "lambda.amazonaws.com"},
-                    "Action": ["sts:AssumeRole"]
+                    "Action": "sts:AssumeRole"
                 }
             ],
         }

@@ -2,7 +2,6 @@
 from time import sleep
 from unittest import TestCase
 import boto3
-from botocore.stub import Stubber
 from awsboto3.api_gateway_helpers import APIGatewayManage
 from awsboto3.lambda_helpers import LambdaManage
 import logging
@@ -73,8 +72,7 @@ class Test(TestCase):
 
         api_wrapper.delete_api(api_name, apig_client)
 
-        api_id = api_wrapper.create_api(account_id, api_base_path,
-                        api_stage, apig_client,api_name)
+        api_id = api_wrapper.create_api(apig_client,api_name)
         
         root_id = api_wrapper.get_root_id(apig_client, api_id)
         

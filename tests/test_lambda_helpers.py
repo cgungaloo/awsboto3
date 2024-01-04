@@ -5,7 +5,6 @@ import boto3
 from botocore.stub import Stubber
 import pytest
 from awsboto3.lambda_helpers import LambdaManage
-from botocore.exceptions import ClientError
 
 class Test(TestCase):
 
@@ -45,7 +44,7 @@ class Test(TestCase):
             ],
         }
 
-        policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+        policy_arn = 'arn:aws:iam::443231674046:policy/gl-policies'
         json_dumped_lambda_role_policy = json.dumps(lambda_role_policy)
 
         lambda_client = boto3.client("lambda")
@@ -55,6 +54,7 @@ class Test(TestCase):
         lambda_manager.create_iam_role(role_name)
         mock_resource.create_role.assert_called_with(RoleName=role_name, 
                                                 AssumeRolePolicyDocument=json_dumped_lambda_role_policy)
+        
         mock_resource.create_role().attach_policy.assert_called_with(PolicyArn=policy_arn)
 
     def test_create_role_error(self):
@@ -63,16 +63,6 @@ class Test(TestCase):
         resource_client = boto3.resource('iam')
 
         resource_stubber = Stubber(resource_client.meta.client)
-
-        role_response = {
-            'Role':{
-                'RoleName':'gl-lambda-role-tst',
-                'Path':'mypath',
-                'Arn':'some-arn-123-321-abc-dew-how',
-                'CreateDate':'2024-01-02',
-                'RoleId':'id12345678910111213141516'
-            }
-        }
 
         resource_stubber.add_client_error('create_role','EntityAlredyExists')
         resource_stubber.activate()

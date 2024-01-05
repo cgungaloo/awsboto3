@@ -8,7 +8,9 @@ class APIGatewayManage:
 
     def create_api(self, apig_client,api_name):
         try:
+            # Create API with name
             response = apig_client.create_rest_api(name=api_name)
+            # Confirm creation by getting generated ID
             api_id = response['id']
             logger.info("Create REST API %s with ID %s.", api_name, api_id)
             return api_id
@@ -94,9 +96,12 @@ class APIGatewayManage:
             f"{api_stage}/{api_base_path}"
         )
         logger.info("Constructed REST API base URL: %s.", api_url)
+        # Get API url
         return api_url
     
     def delete_api(self, api_name, api_client):
+
+        # Delete API if exists already
         response = api_client.get_rest_apis()
         response_items = response['items']
         matches = []

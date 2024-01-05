@@ -20,9 +20,10 @@ class Test(TestCase):
             if function['FunctionName'] == 'getItem':
                 functionfound = function
                 break
-
         functionfound
 
+
+    # Entry point to run API creation and deployment
     def test_run_e2e(self):
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
@@ -39,11 +40,12 @@ class Test(TestCase):
 
         api_name = "gl-demo-lambda-rest-api"
 
+        # Deleting pre existing lambda
         wrapper.delete_lambda(lambda_function_name)
 
+        # Creating IAM role
         iam_role, should_wait = wrapper.create_iam_role(lambda_role_name)
 
-        # Replace with proper checking
         if should_wait:
             logger.info("Giving AWS time to create resources...")
             sleep(10)
@@ -55,6 +57,7 @@ class Test(TestCase):
         lambda_pck_bytes = wrapper.create_deployment_package(lambda_filename,
                                                              destination_file)
 
+        # Deploy Lambda
         function_arn = wrapper.deploy_lambda_function(lambda_function_name,
                                        iam_role,
                                        lambda_handler_name,
@@ -70,6 +73,7 @@ class Test(TestCase):
 
         api_wrapper = APIGatewayManage()
 
+        # Deleting pre existing API
         api_wrapper.delete_api(api_name, apig_client)
 
         api_id = api_wrapper.create_api(apig_client,api_name)

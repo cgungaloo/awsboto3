@@ -37,22 +37,28 @@ class LambdaManage:
     def delete_role(self, iam_role_name):
         try:
             iam_client = boto3.client('iam')
+            # Get list of policies attached to role
             policies = iam_client.list_attached_role_policies(RoleName=iam_role_name)['AttachedPolicies']
             for policy in policies:
                 policy_arn = iam_client.get_policy(PolicyArn=policy['PolicyArn'])['Policy']['Arn']
+                # Detach policy from role
                 iam_client.detach_role_policy(RoleName=iam_role_name, PolicyArn =policy_arn)
+            # Delete role once all policies are detached
             iam_client.delete_role(RoleName=iam_role_name)
         except Exception as e:
             logger.info(f"Cant find role {iam_role_name}")
 
     def create_iam_role(self, iam_role_name):
+
         self.delete_role(iam_role_name)
 
+        
         role = self.get_iam_role(iam_role_name)
 
         if role is not None:
             return role, False
         
+        # Lambda policy
         lambda_role_policy = {
             "Version": "2012-10-17",
             "Statement": [
@@ -64,6 +70,7 @@ class LambdaManage:
             ],
         }
 
+        # Inline policy
         add_permission_policy_arn = 'arn:aws:iam::443231674046:policy/gl-policies'
 
         policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
@@ -75,7 +82,10 @@ class LambdaManage:
             )
 
             logger.info(f'Created role : {role.name}')
+
             role.attach_policy(PolicyArn=policy_arn)
+
+            # Dont think this makes a difference but added it
             role.attach_policy(PolicyArn=add_permission_policy_arn)
             logger.info(f'Attached execution policy to role: {role.name}')
         except ClientError as error:
@@ -106,6 +116,7 @@ class LambdaManage:
     
         if self.check_if_function_exists(function_name) is False:
             try:
+                # Deploy lambda function
                 response = self.lambda_client.create_function(
                     FunctionName=function_name,
                     Description="GL AWS Lambda doc example",
@@ -119,7 +130,7 @@ class LambdaManage:
             except ClientError as error:
                 logger.info(f'Error {error.response["Error"]["Code"] }')
 
-
+            # Verify successful deployment
             if self.check_if_function_exists(function_name):
                 logger.info(f'Created Function {function_name}!!!!')
                 return response['FunctionArn']
@@ -129,6 +140,7 @@ class LambdaManage:
     def check_if_function_exists(self,function_name):
         try:
             functions = self.lambda_client.list_functions()
+            # Find functions that match the name
             for function in functions['Functions']:
                 if function['FunctionName'] == function_name:
                     return True

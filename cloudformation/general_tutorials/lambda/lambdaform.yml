@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  GLLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: GLLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+  HelloLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: HelloLambdaFunction
+      Role: !GetAtt GLLambdaRole.Arn
+      Runtime: python3.12
+      Handler: index.my_handler
+      Code:
+        S3Bucket: cfbucketgl
+        S3Key: lambdafunction-gl.zip

@@ -56,6 +56,31 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:BatchGetItem'
+                  - 'dynamodb:BatchWriteItem'
+                  - 'dynamodb:TagResource'
+                  - 'dynamodb:UntagResource'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:Query'
+                  - 'dynamodb:UpdateItem'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
 
   AllArticlesLambda:
     Type: AWS::Lambda::Function
@@ -85,5 +110,102 @@ Resources:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
 
+  CreateArticlesLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: create_articles
+      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Runtime: python3.12
+      Handler: create_articles.lambda_handler
+      Code:
+        S3Bucket: articlescrudlambdas
+        S3Key: create_articles.zip
+    DependsOn:
+      - DynamoDBQueryPolicy
+      - ArticlesCRUDLambdaRole
+
+  UpdateArticlesLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: update_articles
+      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Runtime: python3.12
+      Handler: update_articles.lambda_handler
+      Code:
+        S3Bucket: articlescrudlambdas
+        S3Key: update_articles.zip
+    DependsOn:
+      - DynamoDBQueryPolicy
+      - ArticlesCRUDLambdaRole
   
+  DeleteArticlesLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: delete_articles
+      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Runtime: python3.12
+      Handler: delete_articles.lambda_handler
+      Code:
+        S3Bucket: articlescrudlambdas
+        S3Key: delete_articles.zip
+    DependsOn:
+      - DynamoDBQueryPolicy
+      - ArticlesCRUDLambdaRole
+
+  APIGatewayRESTAPI:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: articles-crud
+    DependsOn:
+      - DeleteArticlesLambda
+      - UpdateArticlesLambda
+      - AllArticlesLambda
   
+  APIGatewayResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref APIGatewayRESTAPI
+      ParentId: !GetAtt
+        - APIGatewayRESTAPI
+        - RootResourceId
+      PathPart: get_all_articles
+    DependsOn:
+      - APIGatewayRESTAPI
+
+  APIGatewayMethod:
+    Type: 'AWS::ApiGateway::Method'
+    Properties:
+      RestApiId: !Ref APIGatewayRESTAPI
+      ResourceId: !Ref APIGatewayResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      MethodResponses:
+        - StatusCode: 200
+      Integration:
+        Type: AWS_PROXY
+        IntegrationResponses:
+          - StatusCode: 200
+        IntegrationHttpMethod: POST
+        Uri: !Sub
+          - >-
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFuncNameArn}/invocations
+          - LambdaFuncNameArn: !GetAtt AllArticlesLambda.Arn
+    DependsOn:
+      - APIGatewayResource
+  
+  APIGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    Properties:
+      RestApiId: !Ref APIGatewayRESTAPI
+      StageName: test
+    DependsOn:
+      - APIGatewayMethod
+
+  APIGatewayPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !GetAtt AllArticlesLambda.Arn
+      Principal: apigateway.amazonaws.com
+    DependsOn:
+      - APIGatewayDeployment

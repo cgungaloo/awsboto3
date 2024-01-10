@@ -1,0 +1,89 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  ArticlesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: articles
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ExpirationTime"
+        Enabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: "10"
+        WriteCapacityUnits: "5"
+    DependsOn:
+      - DynamoDBQueryPolicy
+
+  DynamoDBQueryPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: DynamoDBQueryPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "dynamodb:Query"
+            Resource: "*"
+      Roles:
+        - Ref: "ArticlesCRUDRole"
+
+  ArticlesCRUDRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "dynamodb.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+
+  ArticlesCRUDLambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: ArticlesCRUDLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+  AllArticlesLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: get_all_articles
+      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Runtime: python3.12
+      Handler: get_all_articles.lambda_handler
+      Code:
+        S3Bucket: articlescrudlambdas
+        S3Key: get_all_articles.zip
+    DependsOn:
+      - DynamoDBQueryPolicy
+      - ArticlesCRUDLambdaRole
+
+  SingleArticlesLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: get_single_article
+      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Runtime: python3.12
+      Handler: get_single_article.lambda_handler
+      Code:
+        S3Bucket: articlescrudlambdas
+        S3Key: get_single_article.zip
+    DependsOn:
+      - DynamoDBQueryPolicy
+      - ArticlesCRUDLambdaRole
+
+  
+  

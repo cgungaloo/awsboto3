@@ -4,3 +4,4 @@ test_lambda_helpers.cpython*
 test_infrarun.cpython*
 lambdafunction-gl.zip
 api_gateway_helpers.cpyth*
+*.cpython*

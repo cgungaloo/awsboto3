@@ -1,28 +1,48 @@
 import json
 import boto3
+from botocore.exceptions import ClientError
+import logging
+
 def lambda_handler(event, context):
+    logger = logging.getLogger(__name__)
+
     client = boto3.resource('dynamodb')
     table = client.Table('articles')
-    response = table.get_item(
-        Key={
-        'id': event['queryStringParameters']['id']
-    }
-    )
-    
+
     http_res = {}
     http_res['headers'] = {}
     http_res['headers']['Content-Type'] = 'application/json'
     
-    if 'Item' in response:
+    try:
+        response = table.get_item(
+            Key={
+            'id': event['queryStringParameters']['id']
+        }
+        )
         
-        http_res['statusCode'] = 200
-        http_res['body'] = json.dumps(response['Item'])
+        if 'Item' in response:
+            
+            http_res['statusCode'] = 200
+            http_res['body'] = json.dumps(response['Item'])
+            
+            return http_res
+        else:
+            
+            http_res['statusCode'] = 400
+            http_res['body'] = json.dumps(f'Not item {event['queryStringParameters']['id']}')
+            
+            return http_res
         
-        
+    except ClientError as ce:
+        logger.info(f'Got ClientError: {str(ce)}')
+        logger.info(f'Exception : {str(ce)}')
+        logger.info(f'Returning 500 error')
+        http_res['statusCode'] = 500
+        http_res['body'] = json.dumps(f'Got ClientError: {str(ce)}')
         return http_res
-    else:
-        
+    except KeyError as ke:
+        logger.info(f'Exception : {str(ke)}')
+        logger.info(f'Returning 400 error')
         http_res['statusCode'] = 400
-        http_res['body'] = json.dumps(f'Not item {event['queryStringParameters']['id']}')
-        
+        http_res['body'] = json.dumps(f'Got Key Error: {str(ke)}')
         return http_res

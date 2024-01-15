@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest import mock
 from awsboto3.cloudformation.general_tutorials.crud.lambdas.get_all_articles import lambda_handler as get_all_lambda
 from awsboto3.cloudformation.general_tutorials.crud.lambdas.create_articles import lambda_handler as create_lambda
+from awsboto3.cloudformation.general_tutorials.crud.lambdas.get_single_article import lambda_handler as single_lambda
 from unittest.mock import patch, Mock
 from boto3.dynamodb.conditions import Attr
 from botocore.stub import Stubber
@@ -81,9 +82,26 @@ class Test(TestCase):
             }
         )
 
-        
         assert response['statusCode'] == 200
         assert response['body'] == 'Record abc123 added'
+    
+    @patch("boto3.resource")
+    def test_single_item(self, mock_resource):
+        event = {"queryStringParameters": 
+                    {"id":"abc123"}}
+        context = LambdaContext()
+
+        mock_table = Mock()
+        mock_table.get_item.return_value = {'statusCode': 200, 'Item':'item creaed'}
+        mock_resource.return_value.Table.return_value = mock_table
+        response = single_lambda(event, context)
+
+        mock_table.get_item_assert_called_with(
+            Key={
+            'id': event['queryStringParameters']['id']
+        }
+        )
+        
 
     def test_create_client_error(self):
         event = {"queryStringParameters": 

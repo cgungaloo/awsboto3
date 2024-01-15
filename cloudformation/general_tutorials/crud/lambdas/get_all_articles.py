@@ -2,6 +2,7 @@ import json
 import boto3
 import logging
 from boto3.dynamodb.conditions import Attr
+from botocore.exceptions import ClientError
 
 def lambda_handler(event, context):
     logger = logging.getLogger(__name__)
@@ -26,15 +27,24 @@ def lambda_handler(event, context):
         http_res['body'] = json.dumps(f'Got Key Error: {str(e)}')
         return http_res
     
-    if not title:
-        logger.info("Title is empty")
-        response = table.scan()
-    else:
-        logger.info("Title is not empty")
+    try:
+        if not title:
+            logger.info("Title is empty")
+            response = table.scan()
+        else:
+            logger.info("Title is not empty")
+            
         
-    response = table.scan(
-                     FilterExpression = Attr('title').begins_with(title)
-                     )
+        response = table.scan(
+                        FilterExpression = Attr('title').begins_with(title)
+                        )
+    except ClientError as ce:
+        logger.info(f'Got ClientError: {str(ce)}')
+        logger.info(f'Exception : {str(e)}')
+        logger.info(f'Returning 500 error')
+        http_res['statusCode'] = 500
+        http_res['body'] = json.dumps(f'Got ClientError: {str(ce)}')
+    
         
 
     http_res['statusCode'] = 200

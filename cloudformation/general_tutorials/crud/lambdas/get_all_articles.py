@@ -40,7 +40,7 @@ def lambda_handler(event, context):
                         )
     except ClientError as ce:
         logger.info(f'Got ClientError: {str(ce)}')
-        logger.info(f'Exception : {str(e)}')
+        logger.info(f'Exception : {str(ce)}')
         logger.info(f'Returning 500 error')
         http_res['statusCode'] = 500
         http_res['body'] = json.dumps(f'Got ClientError: {str(ce)}')

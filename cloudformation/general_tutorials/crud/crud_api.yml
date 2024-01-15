@@ -94,7 +94,7 @@ Resources:
   AllArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://articlescrudlambdas/get_all_articles.zip
+      CodeUri: s3://articlescrudlambdascg/get_all_articles.zip
       Handler: get_all_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
       Runtime: python3.12
@@ -112,7 +112,7 @@ Resources:
   GetSingleArticleLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://articlescrudlambdas/get_single_article.zip
+      CodeUri: s3://articlescrudlambdascg/get_single_article.zip
       Handler: get_single_article.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
       Runtime: python3.12
@@ -130,7 +130,7 @@ Resources:
   CreateArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://articlescrudlambdas/create_articles.zip
+      CodeUri: s3://articlescrudlambdascg/create_articles.zip
       Handler: create_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
       Runtime: python3.12
@@ -148,7 +148,7 @@ Resources:
   UpdateArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://articlescrudlambdas/update_articles.zip
+      CodeUri: s3://articlescrudlambdascg/update_articles.zip
       Handler: update_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
       Runtime: python3.12
@@ -166,7 +166,7 @@ Resources:
   DeleteArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://articlescrudlambdas/delete_articles.zip
+      CodeUri: s3://articlescrudlambdascg/delete_articles.zip
       Handler: delete_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
       Runtime: python3.12

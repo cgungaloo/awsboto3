@@ -5,3 +5,4 @@ test_infrarun.cpython*
 lambdafunction-gl.zip
 api_gateway_helpers.cpyth*
 *.cpython*
+awsenv/

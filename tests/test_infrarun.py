@@ -2,8 +2,8 @@
 from time import sleep
 from unittest import TestCase
 import boto3
-from awsboto3.api_gateway_helpers import APIGatewayManage
-from awsboto3.lambda_helpers import LambdaManage
+from api_gateway_helpers import APIGatewayManage
+from lambda_helpers import LambdaManage
 import logging
 
 class Test(TestCase):

@@ -1,14 +1,19 @@
 from unittest import TestCase
 from unittest import mock
-from awsboto3.cloudformation.general_tutorials.crud.lambdas.get_all_articles import lambda_handler as get_all_lambda
-from awsboto3.cloudformation.general_tutorials.crud.lambdas.create_articles import lambda_handler as create_lambda
-from awsboto3.cloudformation.general_tutorials.crud.lambdas.get_single_article import lambda_handler as single_lambda
+
+# import sys
+# sys.path.append("cloudformation/general_tutorials/crud/lambdas")
+from cloudformation.general_tutorials.crud.lambdas.get_all_articles import lambda_handler as get_all_lambda
+from cloudformation.general_tutorials.crud.lambdas.create_articles import lambda_handler as create_lambda
+from cloudformation.general_tutorials.crud.lambdas.get_single_article import lambda_handler as single_lambda
+from cloudformation.general_tutorials.crud.lambdas.update_articles import lambda_handler as update_lambda
+from cloudformation.general_tutorials.crud.lambdas.tests.test_helpers.lambda_context import LambdaContext
+
 from unittest.mock import patch, Mock
 from boto3.dynamodb.conditions import Attr
 from botocore.stub import Stubber
 import boto3
 
-from awsboto3.cloudformation.general_tutorials.crud.lambdas.tests.test_helpers.lambda_context import LambdaContext
 
 class Test(TestCase):
     
@@ -79,6 +84,36 @@ class Test(TestCase):
                 'published': False,
                 'createdAt': mock.ANY,
                 'updatedAt': mock.ANY
+            }
+        )
+
+        assert response['statusCode'] == 200
+        assert response['body'] == 'Record abc123 added'
+
+    @patch("boto3.resource")
+    def test_update_article(self, mock_resource):
+        event = {"body":
+                 "{\"id\":\"abc123\",\"title\":\"update_title\",\"description\":\"update description\",\"published\":\"False\"}"
+                 }
+
+        context = LambdaContext()
+        mock_table = Mock()
+        mock_table.put_item.return_value= {
+            'ResponseMetadata':{'HTTPStatusCode': 200}
+        }
+
+        mock_resource.return_value.Table.return_value = mock_table
+
+        response = update_lambda(event, context)
+        
+        mock_table.put_item.assert_called_with(
+            Item ={
+                'id':'abc123',
+                'title': 'update_title',
+                'description': 'update description',
+                'published': 'False',
+                'updatedAt': mock.ANY,
+                'createdAt': mock.ANY
             }
         )
 

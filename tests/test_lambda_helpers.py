@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 import boto3
 from botocore.stub import Stubber
 import pytest
-from awsboto3.lambda_helpers import LambdaManage
+from lambda_helpers import LambdaManage
 
 class Test(TestCase):
 

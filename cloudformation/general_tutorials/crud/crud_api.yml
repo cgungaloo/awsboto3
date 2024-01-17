@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 
+Parameters:
+  pTableName:
+    Type: String
+    Default: articles
+
 Resources:
   ArticlesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: articles
+      TableName: !Ref pTableName
       AttributeDefinitions:
         - AttributeName: "id"
           AttributeType: "S"

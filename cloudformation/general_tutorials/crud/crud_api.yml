@@ -8,6 +8,21 @@ Parameters:
   pAttributeName:
     Type: String
     Default: id
+  pGetAllArticles:
+    Type: String
+    Default: get_all_articles
+  pGetSingleArticle:
+    Type: String
+    Default: get_single_article
+  pCreateArticle:
+    Type: String
+    Default: create_article
+  pDeleteArticle:
+    Type: String
+    Default: delete_article
+  pUpdateArticle:
+    Type: String
+    Default: update_article
 
 Resources:
   ArticlesTable:
@@ -102,7 +117,7 @@ Resources:
   AllArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: get_all_articles
+      FunctionName: !Ref pGetAllArticles
       CodeUri: s3://articlescrudlambdascg/get_all_articles.zip
       Handler: get_all_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
@@ -112,7 +127,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: get_all_articles
+            Path: !Ref pGetAllArticles
             Method: GET 
     DependsOn:
       - DynamoDBQueryPolicy
@@ -121,6 +136,7 @@ Resources:
   GetSingleArticleLambda:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Ref pGetSingleArticle
       CodeUri: s3://articlescrudlambdascg/get_single_article.zip
       Handler: get_single_article.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
@@ -130,7 +146,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: get_single_article
+            Path: !Ref pGetSingleArticle
             Method: GET 
     DependsOn:
       - DynamoDBQueryPolicy
@@ -139,6 +155,7 @@ Resources:
   CreateArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Ref pCreateArticle
       CodeUri: s3://articlescrudlambdascg/create_articles.zip
       Handler: create_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
@@ -148,7 +165,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: create_article
+            Path: !Ref pCreateArticle
             Method: PUT
     DependsOn:
       - DynamoDBQueryPolicy
@@ -157,6 +174,7 @@ Resources:
   UpdateArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Ref pUpdateArticle
       CodeUri: s3://articlescrudlambdascg/update_articles.zip
       Handler: update_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
@@ -166,7 +184,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: update_article
+            Path: !Ref pUpdateArticle
             Method: PUT
     DependsOn:
       - DynamoDBQueryPolicy
@@ -175,6 +193,7 @@ Resources:
   DeleteArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Ref pDeleteArticle
       CodeUri: s3://articlescrudlambdascg/delete_articles.zip
       Handler: delete_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn
@@ -184,7 +203,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: delete_article
+            Path: !Ref pDeleteArticle
             Method: DELETE
     DependsOn:
       - DynamoDBQueryPolicy

@@ -10,19 +10,19 @@ Parameters:
     Default: id
   pGetAllArticles:
     Type: String
-    Default: get_all_articles
+    Default: "get_all_articles"
   pGetSingleArticle:
     Type: String
-    Default: get_single_article
+    Default: "get_single_article"
   pCreateArticle:
     Type: String
-    Default: create_article
+    Default: "create_article"
   pDeleteArticle:
     Type: String
-    Default: delete_article
+    Default: "delete_article"
   pUpdateArticle:
     Type: String
-    Default: update_article
+    Default: "update_article"
 
 Resources:
   ArticlesTable:

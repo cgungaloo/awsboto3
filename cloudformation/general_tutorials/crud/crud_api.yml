@@ -127,7 +127,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: !Ref pGetAllArticles
+            Path: get_all_articles
             Method: GET 
     DependsOn:
       - DynamoDBQueryPolicy
@@ -146,7 +146,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: !Ref pGetSingleArticle
+            Path: get_single_article
             Method: GET 
     DependsOn:
       - DynamoDBQueryPolicy
@@ -165,7 +165,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: !Ref pCreateArticle
+            Path: create_article
             Method: PUT
     DependsOn:
       - DynamoDBQueryPolicy
@@ -184,7 +184,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: !Ref pUpdateArticle
+            Path: update_article
             Method: PUT
     DependsOn:
       - DynamoDBQueryPolicy
@@ -203,7 +203,7 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
-            Path: !Ref pDeleteArticle
+            Path: delete_article
             Method: DELETE
     DependsOn:
       - DynamoDBQueryPolicy

@@ -5,6 +5,9 @@ Parameters:
   pTableName:
     Type: String
     Default: articles
+  pAttributeName:
+    Type: String
+    Default: id
 
 Resources:
   ArticlesTable:
@@ -12,10 +15,10 @@ Resources:
     Properties:
       TableName: !Ref pTableName
       AttributeDefinitions:
-        - AttributeName: "id"
+        - AttributeName: !Ref pAttributeName
           AttributeType: "S"
       KeySchema:
-        - AttributeName: "id"
+        - AttributeName: !Ref pAttributeName
           KeyType: "HASH"
       TimeToLiveSpecification:
         AttributeName: "ExpirationTime"
@@ -99,6 +102,7 @@ Resources:
   AllArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: get_all_articles
       CodeUri: s3://articlescrudlambdascg/get_all_articles.zip
       Handler: get_all_articles.lambda_handler
       Role: !GetAtt ArticlesCRUDLambdaRole.Arn

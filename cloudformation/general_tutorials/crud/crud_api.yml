@@ -151,6 +151,9 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: get_single_article
             Method: GET 
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
     DependsOn:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
@@ -192,6 +195,9 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: update_article
             Method: PUT
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
     DependsOn:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
@@ -211,6 +217,9 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: delete_article
             Method: DELETE
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
     DependsOn:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole

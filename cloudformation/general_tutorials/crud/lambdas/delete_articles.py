@@ -2,11 +2,12 @@ import boto3
 from botocore.exceptions import ClientError
 import logging
 import json
+import os
 
 def lambda_handler(event, context):
     logger = logging.getLogger(__name__)
     client = boto3.resource('dynamodb')
-    table = client.Table('articles')
+    table = client.Table(os.environ['TableName'])
 
     http_res = {}
     http_res['headers'] = {}

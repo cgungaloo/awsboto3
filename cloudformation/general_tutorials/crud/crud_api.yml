@@ -53,7 +53,6 @@ Resources:
         Statement:
           - Effect: "Allow"
             Action: "dynamodb:Query"
-            Resource: "*"
       Roles:
         - Ref: "ArticlesCRUDRole"
 

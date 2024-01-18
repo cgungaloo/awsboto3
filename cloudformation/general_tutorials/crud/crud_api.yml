@@ -41,21 +41,6 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: "10"
         WriteCapacityUnits: "5"
-    # DependsOn:
-    #   - DynamoDBQueryPolicy
-
-  # DynamoDBQueryPolicy:
-  #   Type: "AWS::IAM::Policy"
-  #   Properties:
-  #     PolicyName: DynamoDBQueryPolicy
-  #     PolicyDocument:
-  #       Version: "2012-10-17"
-  #       Statement:
-  #         - Effect: "Allow"
-  #           Action: "dynamodb:Query"
-  #           Resource: !GetAtt ArticlesTable.Arn
-  #     Roles:
-  #       - Ref: "ArticlesCRUDRole"
 
   ArticlesCRUDRole:
     Type: "AWS::IAM::Role"
@@ -133,7 +118,6 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
   
   GetSingleArticleLambda:
@@ -155,7 +139,6 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
   
   CreateArticlesLambda:
@@ -177,7 +160,6 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
 
   UpdateArticlesLambda:
@@ -199,7 +181,6 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
 
   DeleteArticlesLambda:
@@ -221,7 +202,6 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
   
   ConfigLambdaPermission:

@@ -3,6 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 import datetime
 import logging
+import os
 
 def lambda_handler(event, context):
     logger = logging.getLogger(__name__)
@@ -13,7 +14,8 @@ def lambda_handler(event, context):
     logger.info("Context %s" % context)
 
     client = boto3.resource('dynamodb')
-    table = client.Table('articles')
+
+    table = client.Table(os.environ['TableName'])
 
     http_res = {}
     http_res['headers'] = {}

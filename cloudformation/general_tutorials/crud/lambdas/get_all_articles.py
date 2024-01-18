@@ -3,6 +3,7 @@ import boto3
 import logging
 from boto3.dynamodb.conditions import Attr
 from botocore.exceptions import ClientError
+import os
 
 def lambda_handler(event, context):
     logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ def lambda_handler(event, context):
     
     try:
         client = boto3.resource('dynamodb')
-        table = client.Table('articles')
+        table = client.Table(os.environ['TableName'])
         
         title = event['queryStringParameters']['title']
 

@@ -131,7 +131,7 @@ Resources:
             Method: GET 
       Environment:
         Variables:
-          TableName: articles
+          TableName: !Ref pTableName
     DependsOn:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole
@@ -170,6 +170,9 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: create_article
             Method: PUT
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
     DependsOn:
       - DynamoDBQueryPolicy
       - ArticlesCRUDLambdaRole

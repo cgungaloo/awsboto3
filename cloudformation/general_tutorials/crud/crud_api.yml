@@ -62,42 +62,6 @@ Resources:
       StageName: Test
     DependsOn:
       - AllArticlesLambda
-  
-  # ArticlesCRUDLambdaRole:
-  #   Type: "AWS::IAM::Role"
-  #   Properties:
-  #     RoleName: ArticlesCRUDLambdaRole
-  #     AssumeRolePolicyDocument:
-  #       Statement:
-  #         - Effect: Allow
-  #           Principal:
-  #             Service: lambda.amazonaws.com
-  #           Action: sts:AssumeRole
-  #     Path: /
-  #     Policies:
-  #       - PolicyName: Policy_api-lambda-db
-  #         PolicyDocument:
-  #           Version: 2012-10-17
-  #           Statement:
-  #             - Effect: Allow
-  #               Action:
-  #                 - 'dynamodb:BatchGetItem'
-  #                 - 'dynamodb:BatchWriteItem'
-  #                 - 'dynamodb:TagResource'
-  #                 - 'dynamodb:UntagResource'
-  #                 - 'dynamodb:PutItem'
-  #                 - 'dynamodb:DeleteItem'
-  #                 - 'dynamodb:GetItem'
-  #                 - 'dynamodb:Scan'
-  #                 - 'dynamodb:Query'
-  #                 - 'dynamodb:UpdateItem'
-  #               Resource: '*'
-  #             - Effect: Allow
-  #               Action:
-  #                 - 'logs:CreateLogStream'
-  #                 - 'logs:CreateLogGroup'
-  #                 - 'logs:PutLogEvents'
-  #               Resource: '*'
 
   AllArticlesRole:
     Type: "AWS::IAM::Role"
@@ -199,6 +163,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - 'dynamodb:UpdateItem'
+                  - 'dynamodb:PutItem'
                 Resource: !GetAtt ArticlesTable.Arn
               - Effect: Allow
                 Action:

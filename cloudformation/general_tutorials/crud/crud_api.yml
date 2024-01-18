@@ -63,41 +63,41 @@ Resources:
     DependsOn:
       - AllArticlesLambda
   
-  ArticlesCRUDLambdaRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      RoleName: ArticlesCRUDLambdaRole
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: lambda.amazonaws.com
-            Action: sts:AssumeRole
-      Path: /
-      Policies:
-        - PolicyName: Policy_api-lambda-db
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'dynamodb:BatchGetItem'
-                  - 'dynamodb:BatchWriteItem'
-                  - 'dynamodb:TagResource'
-                  - 'dynamodb:UntagResource'
-                  - 'dynamodb:PutItem'
-                  - 'dynamodb:DeleteItem'
-                  - 'dynamodb:GetItem'
-                  - 'dynamodb:Scan'
-                  - 'dynamodb:Query'
-                  - 'dynamodb:UpdateItem'
-                Resource: '*'
-              - Effect: Allow
-                Action:
-                  - 'logs:CreateLogStream'
-                  - 'logs:CreateLogGroup'
-                  - 'logs:PutLogEvents'
-                Resource: '*'
+  # ArticlesCRUDLambdaRole:
+  #   Type: "AWS::IAM::Role"
+  #   Properties:
+  #     RoleName: ArticlesCRUDLambdaRole
+  #     AssumeRolePolicyDocument:
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service: lambda.amazonaws.com
+  #           Action: sts:AssumeRole
+  #     Path: /
+  #     Policies:
+  #       - PolicyName: Policy_api-lambda-db
+  #         PolicyDocument:
+  #           Version: 2012-10-17
+  #           Statement:
+  #             - Effect: Allow
+  #               Action:
+  #                 - 'dynamodb:BatchGetItem'
+  #                 - 'dynamodb:BatchWriteItem'
+  #                 - 'dynamodb:TagResource'
+  #                 - 'dynamodb:UntagResource'
+  #                 - 'dynamodb:PutItem'
+  #                 - 'dynamodb:DeleteItem'
+  #                 - 'dynamodb:GetItem'
+  #                 - 'dynamodb:Scan'
+  #                 - 'dynamodb:Query'
+  #                 - 'dynamodb:UpdateItem'
+  #               Resource: '*'
+  #             - Effect: Allow
+  #               Action:
+  #                 - 'logs:CreateLogStream'
+  #                 - 'logs:CreateLogGroup'
+  #                 - 'logs:PutLogEvents'
+  #               Resource: '*'
 
   AllArticlesRole:
     Type: "AWS::IAM::Role"
@@ -129,7 +129,7 @@ Resources:
   SingleArticlesRole:
     Type: "AWS::IAM::Role"
     Properties:
-      RoleName: SingleLambdaRole
+      RoleName: SingleArticleLambdaRole
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -179,7 +179,60 @@ Resources:
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
                 Resource: !GetAtt ArticlesTable.Arn
+  
+  UpdateArticlesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: UpdateLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:UpdateItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesTable.Arn
 
+  DeleteArticlesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: DeleteLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:DeleteItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesTable.Arn
 
   AllArticlesLambda:
     Type: AWS::Serverless::Function
@@ -250,7 +303,7 @@ Resources:
       FunctionName: !Ref pUpdateArticle
       CodeUri: s3://articlescrudlambdascg/update_articles.zip
       Handler: update_articles.lambda_handler
-      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Role: !GetAtt UpdateArticlesRole.Arn
       Runtime: python3.12
       Events:
         ProxyApiRoot:
@@ -263,7 +316,7 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - ArticlesCRUDLambdaRole
+      - UpdateArticlesRole
 
   DeleteArticlesLambda:
     Type: AWS::Serverless::Function
@@ -271,7 +324,7 @@ Resources:
       FunctionName: !Ref pDeleteArticle
       CodeUri: s3://articlescrudlambdascg/delete_articles.zip
       Handler: delete_articles.lambda_handler
-      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Role: !GetAtt DeleteArticlesRole.Arn
       Runtime: python3.12
       Events:
         ProxyApiRoot:
@@ -284,7 +337,7 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - ArticlesCRUDLambdaRole
+      - DeleteArticlesRole
   
   ConfigLambdaPermission:
     Type: "AWS::Lambda::Permission"

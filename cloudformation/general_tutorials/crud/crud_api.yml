@@ -99,13 +99,41 @@ Resources:
                   - 'logs:PutLogEvents'
                 Resource: '*'
 
+  AllArticlesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: AllLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:Scan'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesTable.Arn
+
+
   AllArticlesLambda:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Ref pGetAllArticles
       CodeUri: s3://articlescrudlambdascg/get_all_articles.zip
       Handler: get_all_articles.lambda_handler
-      Role: !GetAtt ArticlesCRUDLambdaRole.Arn
+      Role: !GetAtt AllArticlesRole.Arn
       Runtime: python3.12
       Events:
         ProxyApiRoot:
@@ -118,7 +146,7 @@ Resources:
         Variables:
           TableName: !Ref pTableName
     DependsOn:
-      - ArticlesCRUDLambdaRole
+      - AllArticlesRole
   
   GetSingleArticleLambda:
     Type: AWS::Serverless::Function

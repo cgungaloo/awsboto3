@@ -68,8 +68,8 @@ Resources:
       Properties:
         LogGroupName: articles_crud_log_grp_gl
         RetentionInDays: 7
-      DependsOn:
-        - ApiGatewayApi
+    DependsOn:
+      - ApiGatewayApi
 
   AllArticlesRole:
     Type: "AWS::IAM::Role"

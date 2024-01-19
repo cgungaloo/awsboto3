@@ -60,8 +60,6 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Test
-      AccessLogSettings:
-        DestinationArn: !GetAtt ArticlesCRUDLogGroupGL.Arn
     DependsOn:
       - AllArticlesLambda
 
@@ -75,6 +73,8 @@ Resources:
     Type: "AWS::IAM::Role"
     Properties:
       RoleName: AllLambdaRole
+      AccessLogSettings:
+        DestinationArn: !GetAtt ArticlesCRUDLogGroupGL.Arn
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow

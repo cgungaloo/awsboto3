@@ -6,8 +6,9 @@ import logging
 import os
 
 def lambda_handler(event, context):
-    logger = logging.getLogger(__name__)
-
+    logger = logging.getLogger()
+    logger.setLevel("INFO")
+    
     logger.info(type(event))
     logger.info(event)
     logger.info("Event json %s" % json.dumps(event))

@@ -5,7 +5,9 @@ import json
 import os
 
 def lambda_handler(event, context):
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
+    logger.setLevel("INFO")
+    
     client = boto3.resource('dynamodb')
     table = client.Table(os.environ['TableName'])
 

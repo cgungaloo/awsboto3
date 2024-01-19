@@ -66,15 +66,13 @@ Resources:
   ArticlesCRUDLogGroupGL:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: articles_crud_log_grp_gl
+      LogGroupName: "/aws/lambda/articles_grp_gl"
       RetentionInDays: 7
 
   AllArticlesRole:
     Type: "AWS::IAM::Role"
     Properties:
       RoleName: AllLambdaRole
-      AccessLogSettings:
-        DestinationArn: !GetAtt ArticlesCRUDLogGroupGL.Arn
       AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
@@ -96,7 +94,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
-                Resource: !GetAtt ArticlesTable.Arn
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
 
   SingleArticlesRole:
     Type: "AWS::IAM::Role"

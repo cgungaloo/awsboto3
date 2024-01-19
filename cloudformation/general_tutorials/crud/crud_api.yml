@@ -63,6 +63,12 @@ Resources:
     DependsOn:
       - AllArticlesLambda
 
+  ArticlesCRUDLogGroupGL:
+    Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: articles_crud_log_grp_gl
+        RetentionInDays: 7
+
   AllArticlesRole:
     Type: "AWS::IAM::Role"
     Properties:

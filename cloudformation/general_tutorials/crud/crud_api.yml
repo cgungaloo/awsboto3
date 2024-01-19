@@ -121,7 +121,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
-                Resource: !GetAtt ArticlesTable.Arn
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
   
   CreateArticlesRole:
     Type: "AWS::IAM::Role"
@@ -148,7 +148,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
-                Resource: !GetAtt ArticlesTable.Arn
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
   
   UpdateArticlesRole:
     Type: "AWS::IAM::Role"
@@ -176,7 +176,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
-                Resource: !GetAtt ArticlesTable.Arn
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
 
   DeleteArticlesRole:
     Type: "AWS::IAM::Role"
@@ -203,7 +203,7 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:CreateLogGroup'
                   - 'logs:PutLogEvents'
-                Resource: !GetAtt ArticlesTable.Arn
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
 
   AllArticlesLambda:
     Type: AWS::Serverless::Function
@@ -223,6 +223,8 @@ Resources:
       Environment:
         Variables:
           TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
     DependsOn:
       - AllArticlesRole
   
@@ -244,6 +246,8 @@ Resources:
       Environment:
         Variables:
           TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
     DependsOn:
       - SingleArticlesRole
   
@@ -265,6 +269,8 @@ Resources:
       Environment:
         Variables:
           TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
     DependsOn:
       - CreateArticlesRole
 
@@ -286,6 +292,8 @@ Resources:
       Environment:
         Variables:
           TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
     DependsOn:
       - UpdateArticlesRole
 
@@ -307,6 +315,8 @@ Resources:
       Environment:
         Variables:
           TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
     DependsOn:
       - DeleteArticlesRole
   

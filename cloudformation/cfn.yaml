@@ -1,137 +1,512 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Deploy Lambda'
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
 
 Parameters:
-  pLambdaErrorPeriod:
-    Type: Number
-    Default: 300
-  pLambdaErrorThreshold:
-    Type: Number
-    Default: 5
-  pLambdaFunctionName:
+  pName:
     Type: String
-    Default: MyLambdaFunction
-  pOwnerTag:
+    Default: articlescrud
+  pTableName:
     Type: String
-    Default: ""
+    Default: articles
+  pAttributeName:
+    Type: String
+    Default: id
+  pGetAllArticles:
+    Type: String
+    Default: "get_all_articles"
+  pGetSingleArticle:
+    Type: String
+    Default: "get_single_article"
+  pCreateArticle:
+    Type: String
+    Default: "create_article"
+  pDeleteArticle:
+    Type: String
+    Default: "delete_article"
+  pUpdateArticle:
+    Type: String
+    Default: "update_article"
+  pVpcCIDR:
+    Type: String
+    Description: "CIDR block for the VPC"
+    Default: "10.0.0.0/16"
+  pSubnetACIDR:
+    Type: String
+    Description: "CIDR block for Subnet A"
+    Default: "10.0.1.0/24"
   pRetentionInDays:
     Type: Number
-    Default: 30
-  pS3Bucket:
+    Default: 7
+  pBucketName:
     Type: String
-    Default: 603825719481-lambda-deployment-packages
-  pS3Key:
+    Default: "articlescrudlambdascg"
+  pCloudWatchEmail:
     Type: String
-    Default: MyS3Key
-
+    Default: "chris.gungaloo@globallogic.com"
 
 Resources:
-  rMyLogGroup:
+  CRUDVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref pVpcCIDR
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: ArticlesCRUD_CG_GL
+
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      VpcId: !Ref CRUDVPC
+      CidrBlock: !Ref pSubnetACIDR
+      Tags:
+        - Key: Name
+          Value: !Sub "${pName}-subnet-cg"
+
+
+  CrudSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security group for Lambda function"
+      VpcId: !Ref CRUDVPC
+
+  
+  rRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CRUDVPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${pName}-route-table"
+
+  rSubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref rRouteTable
+      SubnetId: !Ref SubnetA
+
+  DynamoDBEndpoint:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.dynamodb'
+      VpcId: !Ref CRUDVPC
+      VpcEndpointType: Gateway
+      RouteTableIds: [ !Ref rRouteTable ]
+
+
+  ArticlesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref pTableName
+      AttributeDefinitions:
+        - AttributeName: !Ref pAttributeName
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: !Ref pAttributeName
+          KeyType: "HASH"
+      TimeToLiveSpecification:
+        AttributeName: "ExpirationTime"
+        Enabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: "10"
+        WriteCapacityUnits: "5"
+      
+  
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Test
+    DependsOn:
+      - AllArticlesLambda
+
+  ArticlesCRUDLogGroupGL:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub "/aws/lambda/${pLambdaFunctionName}"
+      LogGroupName: "/aws/lambda/articles_grp_gl"
       RetentionInDays: !Ref pRetentionInDays
-      Tags:
-        - Key: Owner
-          Value: !Ref pOwnerTag
+    DependsOn: 
+      - ArticlesCrudSNSTopic
 
-  rMyIAMRole:
-    Type: AWS::IAM::Role
+  AllArticlesRole:
+    Type: "AWS::IAM::Role"
     Properties:
-      RoleName: !Sub "lambda-role-${pLambdaFunctionName}"
+      RoleName: AllLambdaRole
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
-      Tags:
-        - Key: Owner
-          Value: !Ref pOwnerTag
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:Scan'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
+              - Effect: Allow
+                Action:
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:CreateNetworkInterface'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:DescribeInstances'
+                  - 'ec2:AttachNetworkInterface'
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject*'
+                Resource: !Sub "arn:aws:s3:::${pBucketName}/get_all_articles.zip"
 
-  rMyLambdaRolePolicy:
-    Type: AWS::IAM::Policy
+  SingleArticlesRole:
+    Type: "AWS::IAM::Role"
     Properties:
-      PolicyName: MyLambdaRolePolicy
-      PolicyDocument:
-        Version: "2012-10-17"
+      RoleName: SingleArticleLambdaRole
+      AssumeRolePolicyDocument:
         Statement:
           - Effect: Allow
-            Action:
-              - logs:CreateLogGroup
-              - logs:CreateLogStream
-              - logs:PutLogEvents
-            Resource: "*"
-      Roles:
-        - !Ref rMyIAMRole
-
-  rMyLambdaFunction:
-    Type: AWS::Lambda::Function
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:GetItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject*'
+                Resource: !Sub "arn:aws:s3:::${pBucketName}/get_single_article.zip"
+  
+  CreateArticlesRole:
+    Type: "AWS::IAM::Role"
     Properties:
-      FunctionName: !Ref pLambdaFunctionName
-      Role: !GetAtt rMyIAMRole.Arn
-      Handler: lambda_function.lambda_handler
-      Runtime: python3.8
-      Code:
-        S3Bucket: !Ref pS3Bucket
-        S3Key: !Ref pS3Key
-      Tags:
-        - Key: Owner
-          Value: !Ref pOwnerTag
+      RoleName: SingleLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:PutItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject*'
+                Resource: !Sub "arn:aws:s3:::${pBucketName}/create_articles.zip"
 
-  rErrorAlarmTopic:
+  
+  UpdateArticlesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: UpdateLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:UpdateItem'
+                  - 'dynamodb:PutItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject*'
+                Resource: !Sub "arn:aws:s3:::${pBucketName}/update_articles.zip"
+
+
+  DeleteArticlesRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: DeleteLambdaRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: Policy_api-lambda-db
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:DeleteItem'
+                Resource: !GetAtt ArticlesTable.Arn
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogStream'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:PutLogEvents'
+                Resource: !GetAtt ArticlesCRUDLogGroupGL.Arn
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject*'
+                Resource: !Sub "arn:aws:s3:::${pBucketName}/delete_articles.zip"
+
+
+  AllArticlesLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref pGetAllArticles
+      CodeUri: 
+        Bucket: !Ref pBucketName
+        Key: get_all_articles.zip
+      Handler: get_all_articles.lambda_handler
+      Role: !GetAtt AllArticlesRole.Arn
+      Runtime: python3.12
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: get_all_articles
+            Method: GET 
+      VpcConfig:
+        SecurityGroupIds:
+          - !Ref CrudSecurityGroup
+        SubnetIds:
+          - !Ref SubnetA
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
+    DependsOn:
+      - AllArticlesRole
+
+  
+  GetSingleArticleLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref pGetSingleArticle
+      CodeUri: 
+        Bucket: !Ref pBucketName
+        Key: get_single_article.zip
+      Handler: get_single_article.lambda_handler
+      Role: !GetAtt SingleArticlesRole.Arn
+      Runtime: python3.12
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: get_single_article
+            Method: GET 
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
+    DependsOn:
+      - SingleArticlesRole
+  
+  CreateArticlesLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref pCreateArticle
+      CodeUri: 
+        Bucket: !Ref pBucketName
+        Key: create_articles.zip
+      Handler: create_articles.lambda_handler
+      Role: !GetAtt CreateArticlesRole.Arn
+      Runtime: python3.12
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: create_article
+            Method: PUT
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
+    DependsOn:
+      - CreateArticlesRole
+
+  UpdateArticlesLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref pUpdateArticle
+      CodeUri: 
+        Bucket: !Ref pBucketName
+        Key: update_articles.zip
+      Handler: update_articles.lambda_handler
+      Role: !GetAtt UpdateArticlesRole.Arn
+      Runtime: python3.12
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: update_article
+            Method: PUT
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
+    DependsOn:
+      - UpdateArticlesRole
+
+  DeleteArticlesLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref pDeleteArticle
+      CodeUri: 
+        Bucket: !Ref pBucketName
+        Key: delete_articles.zip
+      Handler: delete_articles.lambda_handler
+      Role: !GetAtt DeleteArticlesRole.Arn
+      Runtime: python3.12
+      Events:
+        ProxyApiRoot:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: delete_article
+            Method: DELETE
+      Environment:
+        Variables:
+          TableName: !Ref pTableName
+      LoggingConfig:
+        LogGroup: !Ref ArticlesCRUDLogGroupGL
+    DependsOn:
+      - DeleteArticlesRole
+  
+  ConfigLambdaPermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - ApiGatewayApi
+    - AllArticlesLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref AllArticlesLambda
+      Principal: apigateway.amazonaws.com
+
+  SingleArticlePermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - ApiGatewayApi
+    - GetSingleArticleLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref GetSingleArticleLambda
+      Principal: apigateway.amazonaws.com
+
+  CreateArticlePermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - ApiGatewayApi
+    - CreateArticlesLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref CreateArticlesLambda
+      Principal: apigateway.amazonaws.com
+
+  UpdateArticlePermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - ApiGatewayApi
+    - UpdateArticlesLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref UpdateArticlesLambda
+      Principal: apigateway.amazonaws.com
+
+  DeleteArticlePermission:
+    Type: "AWS::Lambda::Permission"
+    DependsOn:
+    - ApiGatewayApi
+    - DeleteArticlesLambda
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref DeleteArticlesLambda
+      Principal: apigateway.amazonaws.com
+
+  ArticlesCrudSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: !Sub "lambda-function-${pLambdaFunctionName}-errors"
+      Subscription:
+      - Endpoint: !Ref pCloudWatchEmail
+        Protocol: email
 
-  rMyLambdaFunctionAlarm:
+  ArticlesCrudMetrics: 
+    Type: AWS::Logs::MetricFilter
+    DependsOn: ArticlesCrudSNSTopic
+    Properties: 
+      LogGroupName: !Ref "ArticlesCRUDLogGroupGL"
+      FilterPattern: '[ERROR, error]'
+      MetricTransformations: 
+        - MetricValue: '1'
+          MetricNamespace: 'Errors'
+          MetricName: 'ErrorCount'
+
+  ArticlesCRUDErrorAlarm:
     Type: AWS::CloudWatch::Alarm
+    DependsOn: ArticlesCrudMetrics
     Properties:
-      AlarmName: !Sub "lambda-function-${pLambdaFunctionName}-errors"
-      AlarmDescription: !Sub "lambda-function-${pLambdaFunctionName} errors exceed ${pLambdaErrorThreshold} %"
-      Metrics:
-        - Id: error_percentage
-          Label: Errors
-          Expression: (errors/invocations)*100
-        - Id: errors
-          Label: input
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/Lambda
-              MetricName: Errors
-              Dimensions:
-                - Name: FunctionName
-                  Value: !Ref pLambdaFunctionName
-            Period: !Ref pLambdaErrorPeriod
-            Stat: Sum
-            Unit: Count
-        - Id: invocations
-          Label: input
-          ReturnData: false
-          MetricStat:
-            Metric:
-              Namespace: AWS/Lambda
-              MetricName: Invocations
-              Dimensions:
-                - Name: FunctionName
-                  Value: !Ref pLambdaFunctionName
-            Period: !Ref pLambdaErrorPeriod
-            Stat: Sum
-            Unit: Count
-      EvaluationPeriods: 1
-      Threshold: !Ref pLambdaErrorThreshold
-      ComparisonOperator: GreaterThanThreshold
-      AlarmActions:
-        - !Ref rErrorAlarmTopic
-      OKActions:
-        - !Ref rErrorAlarmTopic
-
-Outputs:
-  MyIAMRoleArn:
-    Description: The ARN of the IAM role
-    Value: !GetAtt rMyIAMRole.Arn
-
-
-
+      AlarmName: ArticlesCrudErrorAlarm
+      AlarmActions: 
+        - !Ref ArticlesCrudSNSTopic
+      MetricName: ArticlesCrudMetrics
+      Namespace: LogMetrics
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      EvaluationPeriods: '1'
+      Period: '900'
+      Statistic: Sum
+      Threshold: '1'
+      TreatMissingData: breaching
